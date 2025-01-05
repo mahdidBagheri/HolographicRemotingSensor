@@ -20,6 +20,7 @@
 
 #include <winrt/Windows.Foundation.Metadata.h>
 #include <winrt/Windows.Ui.Popups.h>
+#include <SensorCapture.h>
 
 using namespace std::chrono_literals;
 
@@ -41,10 +42,12 @@ namespace
 
 SamplePlayerMain::SamplePlayerMain()
 {
+    
     m_canCommitDirect3D11DepthBuffer = winrt::Windows::Foundation::Metadata::ApiInformation::IsMethodPresent(
         L"Windows.Graphics.Holographic.HolographicCameraRenderingParameters", L"CommitDirect3D11DepthBuffer");
 
     m_ipAddressUpdater = CreateIpAddressUpdater();
+    
 }
 SamplePlayerMain::~SamplePlayerMain()
 {
@@ -378,8 +381,10 @@ void SamplePlayerMain::Initialize(const CoreApplicationView& applicationView)
 {
     // Create the player context
     // IMPORTANT: This must be done before creating the HolographicSpace (or any other call to the Holographic API).
+
     try
     {
+        
         m_playerContext = PlayerContext::Create();
     }
     catch (winrt::hresult_error)
@@ -503,6 +508,7 @@ void SamplePlayerMain::Load(const winrt::hstring& entryPoint)
 
 void SamplePlayerMain::Run()
 {
+
     using Clock = std::chrono::high_resolution_clock;
     using TimePoint = Clock::time_point;
     using Duration = Clock::duration;
@@ -626,7 +632,6 @@ void SamplePlayerMain::OnDeviceRestored()
 void SamplePlayerMain::LoadLogoImage()
 {
     m_logoImage = nullptr;
-
     winrt::com_ptr<ID3D11ShaderResourceView> logoView;
     winrt::check_hresult(
         DirectX::CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"RemotingLogo.dds", m_logoImage.put(), logoView.put()));
@@ -1004,6 +1009,24 @@ void SamplePlayerMain::OnWindowClosed(const CoreWindow& sender, const CoreWindow
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
 {
+    ResearchMode_Startup();
+    OutputDebugString(L"after function");
+
+    std::tuple<UINT16 const*, UINT16 const*> IRsensors = GetDepth();
+
+    UINT16 const* sensor1Values = std::get<0>(IRsensors);
+    UINT16 const* sensor2Values = std::get<1>(IRsensors);
+
+    std::wostringstream woss;
+    woss << L"The value of myVariable is:";
+    for (int i = 0; i < 262144; i++)
+    {
+        woss << sensor1Values[i] << ',';
+    }
+    std::wstring varString = woss.str();
+    OutputDebugString(varString.c_str());
+
+    OutputDebugString(L"after GetDepth");
     winrt::init_apartment();
     winrt::com_ptr<SamplePlayerMain> main = winrt::make_self<SamplePlayerMain>();
     CoreApplication::Run(*main);

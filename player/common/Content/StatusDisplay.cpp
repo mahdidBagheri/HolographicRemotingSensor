@@ -788,3 +788,5 @@ bool StatusDisplay::Line::operator!=(const Line& line) const
 {
     return !operator==(line);
 }
+
+
