@@ -7,8 +7,6 @@
 #include <winrt/Windows.Foundation.Numerics.h>
 #include <winrt/Windows.Perception.Spatial.h>
 
-class SensorCapture{
-
 
     int const RM_ZHT_WIDTH  = 512;
     int const RM_ZHT_HEIGHT = 512;
@@ -46,5 +44,5 @@ class SensorCapture{
     void ResearchMode_SetEyeSelection(bool enable);
 
     //static void ResearchMode_CameraAccessCallback(ResearchModeSensorConsent consent);
-};
+
 
