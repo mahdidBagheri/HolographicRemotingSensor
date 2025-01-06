@@ -1009,24 +1009,35 @@ void SamplePlayerMain::OnWindowClosed(const CoreWindow& sender, const CoreWindow
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
 {
-    ResearchMode_Startup();
+    SensorCapture sc = SensorCapture();
+    sc.ResearchMode_Startup();
+    sc.StartStreaming();
     OutputDebugString(L"after function");
 
-    std::tuple<UINT16 const*, UINT16 const*> IRsensors = GetDepth();
+    std::tuple<UINT16 const*, UINT16 const*> IRsensors = sc.GetDepth();
 
     UINT16 const* sensor1Values = std::get<0>(IRsensors);
     UINT16 const* sensor2Values = std::get<1>(IRsensors);
 
-    std::wostringstream woss;
-    woss << L"The value of myVariable is:";
+    std::wostringstream depthString;
+    depthString << L"\n Depth";
     for (int i = 0; i < 262144; i++)
     {
-        woss << sensor1Values[i] << ',';
+        depthString << sensor1Values[i] << ',';
     }
-    std::wstring varString = woss.str();
-    OutputDebugString(varString.c_str());
+    std::wstring dString = depthString.str();
+    OutputDebugString(dString.c_str());
 
-    OutputDebugString(L"after GetDepth");
+    std::wostringstream abString;
+    abString << L"\n AB";
+    for (int i = 0; i < 262144; i++)
+    {
+        abString << sensor2Values[i] << ',';
+    }
+    std::wstring aString = abString.str();
+    OutputDebugString(aString.c_str());
+
+    OutputDebugString(L"\nafter GetDepth");
     winrt::init_apartment();
     winrt::com_ptr<SamplePlayerMain> main = winrt::make_self<SamplePlayerMain>();
     CoreApplication::Run(*main);
