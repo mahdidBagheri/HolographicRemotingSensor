@@ -1020,7 +1020,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
     UINT16 const* sensor2Values = std::get<1>(IRsensors);
 
     std::wostringstream depthString;
-    depthString << L"\n Depth";
+    depthString << L"\n Depth \n";
     for (int i = 0; i < 262144; i++)
     {
         depthString << sensor1Values[i] << ',';
@@ -1029,7 +1029,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
     OutputDebugString(dString.c_str());
 
     std::wostringstream abString;
-    abString << L"\n AB";
+    abString << L"\n AB \n";
     for (int i = 0; i < 262144; i++)
     {
         abString << sensor2Values[i] << ',';
@@ -1037,7 +1037,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
     std::wstring aString = abString.str();
     OutputDebugString(aString.c_str());
 
-    OutputDebugString(L"\nafter GetDepth");
+    OutputDebugString(L"\n after GetDepth \n");
     winrt::init_apartment();
     winrt::com_ptr<SamplePlayerMain> main = winrt::make_self<SamplePlayerMain>();
     CoreApplication::Run(*main);
