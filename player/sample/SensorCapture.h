@@ -7,6 +7,10 @@
 #include <winrt/Windows.Foundation.Numerics.h>
 #include <winrt/Windows.Perception.Spatial.h>
 #include <winrt/Windows.Perception.Spatial.Preview.h>
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.Web.Http.h>
+#include <winrt/Windows.Data.Json.h>
+#include <iostream>
 
 using namespace winrt::Windows::Foundation::Numerics;
 using namespace winrt::Windows::Perception::Spatial;
@@ -54,6 +58,7 @@ public:
     //void ResearchMode_Cleanup();
     std::tuple<UINT16 const*, UINT16 const*> GetDepth();
     void ReleaseSensor();
+    void SendUInt16Array(UINT16 const* array, winrt::Windows::Foundation::Uri uri);
     IResearchModeSensorFrame* pSensorFrame; // Release
     void ResearchMode_CameraAccessCallback(ResearchModeSensorConsent consent);
 

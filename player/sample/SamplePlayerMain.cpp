@@ -21,7 +21,18 @@
 #include <winrt/Windows.Foundation.Metadata.h>
 #include <winrt/Windows.Ui.Popups.h>
 #include <SensorCapture.h>
+#include "SamplePlayerMain.h"
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.Media.SpeechRecognition.h>
+#include <winrt/Windows.UI.Core.h>
+#include <iostream>
+#include <speechapi_cxx.h>
 
+using namespace std;
+using namespace winrt;
+using namespace Windows::Foundation;
+using namespace Windows::Media::SpeechRecognition;
+using namespace Windows::UI::Core;
 using namespace std::chrono_literals;
 
 using namespace winrt::Microsoft::Holographic::AppRemoting;
@@ -1005,14 +1016,48 @@ void SamplePlayerMain::OnWindowClosed(const CoreWindow& sender, const CoreWindow
     m_windowClosed = true;
 }
 
-#pragma endregion Window event handlers
 
-int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
-{
+
+SamplePlayerMain::SamplePlayerMain() {
+    // Initialize speech recognizer and constraints in the constructor or another setup method
+    recognizer = SpeechRecognizer();
+}
+
+void SamplePlayerMain::StartListeningForCommands() {
+    // Create a phrase list to match the "register the face" command
+    SpeechRecognitionListConstraint commandConstraint(L"register the face");
+    recognizer.Constraints().Append(commandConstraint);
+
+    // Compile constraints and start recognition
+    recognizer.CompileConstraintsAsync().get();  // Wait for constraints to compile
+
+    // Set up the event to handle the speech recognition result
+    recognizer.ContinuousRecognitionSession().Recognizing() =
+        [this](const SpeechRecognitionResult& result) {
+        OnSpeechRecognized(result);
+        };
+
+    // Start continuous recognition
+    recognizer.ContinuousRecognitionSession().StartAsync().get();
+
+    cout << "Listening for command: 'register the face'..." << endl;
+}
+
+void SamplePlayerMain::OnSpeechRecognized(const SpeechRecognitionResult& result) {
+    // Check if the recognized phrase matches the desired command
+    if (result.Text() == L"register the face") {
+        RegisterFaceFunction();
+    }
+}
+
+void SamplePlayerMain::RegisterFaceFunction() {
+    // Placeholder for the face registration logic
+    cout << "Face registration process started!" << endl;
+
     SensorCapture sc = SensorCapture();
     sc.ResearchMode_Startup();
     sc.StartStreaming();
-    OutputDebugString(L"after function");
+    //OutputDebugString(L"after function");
 
     std::tuple<UINT16 const*, UINT16 const*> IRsensors = sc.GetDepth();
 
@@ -1028,17 +1073,34 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
     std::wstring dString = depthString.str();
     OutputDebugString(dString.c_str());
 
-    std::wostringstream abString;
-    abString << L"\n AB \n";
+    std::wostringstream abstring;
+    abstring << L"\n ab \n";
     for (int i = 0; i < 262144; i++)
     {
-        abString << sensor2Values[i] << ',';
+        abstring << sensor2Values[i] << ',';
     }
-    std::wstring aString = abString.str();
-    OutputDebugString(aString.c_str());
+    std::wstring astring = abstring.str();
+    OutputDebugString(astring.c_str());
 
     OutputDebugString(L"\n after GetDepth \n");
+
+    winrt::Windows::Foundation::Uri uri2(L"http://192.168.214.246:4028/getdata/ab");
+    sc.SendUInt16Array(sensor2Values, uri2);
+
+    winrt::Windows::Foundation::Uri uri1(L"http://192.168.214.246:4028/getdata/depth");
+    sc.SendUInt16Array(sensor1Values, uri1);
+
+    OutputDebugString(L"\n after Send \n");
+
+}
+
+
+#pragma endregion Window event handlers
+
+int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
+{
     winrt::init_apartment();
+
     winrt::com_ptr<SamplePlayerMain> main = winrt::make_self<SamplePlayerMain>();
     CoreApplication::Run(*main);
     return 0;

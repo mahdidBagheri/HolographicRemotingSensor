@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<AppInstaller
+	Uri="file:///F:/work/ARassis/remoteRenderingSensor/RemotRenderingSensor2/HolographicRemotingSensor/SamplePlayer.appinstaller"
+	Version="2.9.5.0" xmlns="http://schemas.microsoft.com/appx/appinstaller/2017/2">
+	<MainBundle
+		Name="SampleHolographicRemotingPlayer"
+		Version="2.9.5.0"
+		Publisher="CN=SampleHolographicRemotingPlayer"
+		Uri="file:///F:/work/ARassis/remoteRenderingSensor/RemotRenderingSensor2/HolographicRemotingSensor/SamplePlayer_2.9.5.0_Test/SamplePlayer_2.9.5.0_arm64.appxbundle" />
+	<Dependencies>
+		<Package
+			Name="Microsoft.VCLibs.140.00"
+			Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+			ProcessorArchitecture="arm64"
+			Uri="file:///F:/work/ARassis/remoteRenderingSensor/RemotRenderingSensor2/HolographicRemotingSensor/SamplePlayer_2.9.5.0_Test/Dependencies/ARM64/Microsoft.VCLibs.ARM64.14.00.appx"
+			Version="14.0.33519.0" />
+	</Dependencies>
+	<UpdateSettings>
+		<OnLaunch
+			HoursBetweenUpdateChecks="0" />
+	</UpdateSettings>
+</AppInstaller>

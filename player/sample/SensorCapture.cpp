@@ -94,6 +94,7 @@ void SensorCapture::ResearchMode_Startup()
 void SensorCapture::StartStreaming()
 {
     this->depthSensor->OpenStream();
+    OutputDebugString(L"STR0");
 }
 
 std::tuple<UINT16 const*, UINT16 const*> SensorCapture::GetDepth()
@@ -132,6 +133,47 @@ void SensorCapture::ReleaseSensor()
 {
     this->pSensorFrame->Release();
     this->depthSensor->CloseStream();
+}
+
+void SensorCapture::SendUInt16Array(UINT16 const* array, winrt::Windows::Foundation::Uri uri) {
+
+    try {
+        // Calculate the size of the array
+        size_t size = 512*512;
+        std::wcerr << L"arraysize: " << size << std::endl;
+        // Create an HttpClient
+        winrt::Windows::Web::Http::HttpClient client;
+
+        //size = 125;
+        std::wstring jsonString = L"{\"data\": [";
+        for (size_t i = 0; i < size; ++i) {
+            jsonString += std::to_wstring(array[i]);
+            if (i < size - 1) {
+                jsonString += L",";
+            }
+        }
+        jsonString += L"]}";
+
+        OutputDebugString(jsonString.c_str());
+
+        // Create an HTTP StringContent with the JSON string
+        winrt::Windows::Web::Http::HttpStringContent content(
+            jsonString,
+            winrt::Windows::Storage::Streams::UnicodeEncoding::Utf8,
+            L"application/json"
+        );
+
+        // Create the URI
+        
+
+        // Send the POST request asynchronously
+        client.PostAsync(uri, content);
+
+        OutputDebugString(L"sent array");
+    }
+    catch (const winrt::hresult_error& ex) {
+        std::wcerr << L"Error: " << ex.message().c_str() << std::endl;
+    }
 }
 
 
