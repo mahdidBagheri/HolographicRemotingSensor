@@ -10,29 +10,19 @@
 //*********************************************************
 
 #include "pch.h"
-
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.Networking.Sockets.h>
+#include <winrt/Windows.Storage.Streams.h>
+#include <iostream>
 #include "SamplePlayerMain.h"
-
+#include <winrt/Windows.Devices.Enumeration.h>
+#include <winrt/Windows.Networking.Sockets.h>
 #include "../common/Content/DDSTextureLoader.h"
 #include "../common/PlayerUtil.h"
-
-#include <sstream>
-
-#include <winrt/Windows.Foundation.Metadata.h>
-#include <winrt/Windows.Ui.Popups.h>
-#include <SensorCapture.h>
-#include "SamplePlayerMain.h"
-#include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.Media.SpeechRecognition.h>
-#include <winrt/Windows.UI.Core.h>
-#include <iostream>
-#include <speechapi_cxx.h>
-
-using namespace std;
 using namespace winrt;
-using namespace Windows::Foundation;
-using namespace Windows::Media::SpeechRecognition;
-using namespace Windows::UI::Core;
+
+
+
 using namespace std::chrono_literals;
 
 using namespace winrt::Microsoft::Holographic::AppRemoting;
@@ -45,6 +35,13 @@ using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
 using namespace winrt::Windows::Perception::Spatial;
 using namespace winrt::Windows::UI::Core;
 using namespace winrt::Windows::UI::Input::Spatial;
+using namespace std;
+using namespace winrt::Windows::Media::SpeechRecognition;
+using namespace winrt::Windows::Foundation::Collections;
+using namespace winrt::Windows::Devices::Enumeration;
+using namespace winrt::Windows::Networking::Sockets;
+using namespace winrt::Windows::Storage::Streams;
+
 
 namespace
 {
@@ -1016,90 +1013,334 @@ void SamplePlayerMain::OnWindowClosed(const CoreWindow& sender, const CoreWindow
     m_windowClosed = true;
 }
 
+#include <winrt/Windows.Media.Capture.h>;
+#include <iostream>;
+#include <windows.foundation.h>
 
+using namespace winrt::Windows::Media::Capture;
 
-SamplePlayerMain::SamplePlayerMain() {
-    // Initialize speech recognizer and constraints in the constructor or another setup method
-    recognizer = SpeechRecognizer();
-}
+void CheckMicrophonePermission()
+{
+    // Get the device access information for the microphone
+    auto deviceAccessInfo = DeviceAccessInformation::CreateFromDeviceClass(DeviceClass::AudioCapture);
 
-void SamplePlayerMain::StartListeningForCommands() {
-    // Create a phrase list to match the "register the face" command
-    SpeechRecognitionListConstraint commandConstraint(L"register the face");
-    recognizer.Constraints().Append(commandConstraint);
-
-    // Compile constraints and start recognition
-    recognizer.CompileConstraintsAsync().get();  // Wait for constraints to compile
-
-    // Set up the event to handle the speech recognition result
-    recognizer.ContinuousRecognitionSession().Recognizing() =
-        [this](const SpeechRecognitionResult& result) {
-        OnSpeechRecognized(result);
-        };
-
-    // Start continuous recognition
-    recognizer.ContinuousRecognitionSession().StartAsync().get();
-
-    cout << "Listening for command: 'register the face'..." << endl;
-}
-
-void SamplePlayerMain::OnSpeechRecognized(const SpeechRecognitionResult& result) {
-    // Check if the recognized phrase matches the desired command
-    if (result.Text() == L"register the face") {
-        RegisterFaceFunction();
+    // Check the current access status
+    auto accessStatus = deviceAccessInfo.CurrentStatus();
+    OutputDebugString(L"Microphone ???????");
+    switch (accessStatus)
+    {
+    case DeviceAccessStatus::Allowed:
+        OutputDebugString(L"Microphone access is allowed.");
+        break;
+    case DeviceAccessStatus::DeniedByUser:
+        OutputDebugString(L"Microphone access is denied by the user.");
+        break;
+    case DeviceAccessStatus::DeniedBySystem:
+        OutputDebugString(L"Microphone access is denied by the system.");
+        break;
+    case DeviceAccessStatus::Unspecified:
+        OutputDebugString(L"Microphone access status is unspecified.");
+        break;
     }
 }
 
-void SamplePlayerMain::RegisterFaceFunction() {
-    // Placeholder for the face registration logic
-    cout << "Face registration process started!" << endl;
+#pragma endregion Window event handlers
 
+
+
+// Function to handle continuous speech recognition
+void StartContinuousSpeechRecognition(const std::vector<winrt::hstring>& phrases)
+{
+    winrt::hstring tag = L"tag";
+    OutputDebugString(L"aaaaa");
+    //SpeechRecognitionListConstraint listConstraint(phrases, tag);
+    //std::vector<SpeechRecognitionListConstraint> constraints = { listConstraint };
+
+    // Define a custom result handler
+    auto resultHandler = [](const SpeechContinuousRecognitionResultGeneratedEventArgs& args)
+        {
+            if (args.Result().Status() == SpeechRecognitionResultStatus::Success)
+            {
+                OutputDebugString(L"1111");
+                std::wcout << L"Custom Handler - Recognized: " << args.Result().Text().c_str() << std::endl;
+            }
+            else
+            {
+                OutputDebugString(L"1112");
+                std::wcout << L"Custom Handler - Recognition failed." << std::endl;
+            }
+        };
+    // Create an instance of the SpeechRecognizer
+    SpeechRecognizer recognizer;
+
+    // Convert std::vector<std::wstring> to IVector<hstring>
+    IVector<hstring> phraseList = single_threaded_vector<hstring>();
+    for (const auto& phrase : phrases)
+    {
+        phraseList.Append(winrt::hstring(phrase));
+    }
+    OutputDebugString(L"bbbbb");
+    // Create a SpeechRecognitionListConstraint
+    SpeechRecognitionListConstraint listConstraint(phraseList);
+
+    // Add the constraint to the recognizer
+    recognizer.Constraints().Append(listConstraint);
+
+    // Compile the constraints
+    recognizer.CompileConstraintsAsync().get();
+
+    // Set up the continuous recognition session
+    auto continuousSession = recognizer.ContinuousRecognitionSession();
+
+    // Register the custom result handler
+    continuousSession.ResultGenerated([resultHandler](const SpeechContinuousRecognitionSession&, const SpeechContinuousRecognitionResultGeneratedEventArgs& args)
+        {
+            resultHandler(args);
+        });
+    OutputDebugString(L"ccccc");
+    continuousSession.Completed([](const SpeechContinuousRecognitionSession&, const SpeechContinuousRecognitionCompletedEventArgs&)
+        {
+            OutputDebugString(L"Recognition session completed.");
+        });
+
+    //continuousSession.Canceled([](const SpeechContinuousRecognitionSession&, const SpeechRecognitionContinuousRecognitionCanceledEventArgs& args)
+    //    {
+    //        std::wcout << L"Recognition session canceled: " << args.Result().Text().c_str() << std::endl;
+    //    });
+
+    // Start the continuous recognition session
+    continuousSession.StartAsync().get();
+
+    OutputDebugString(L"Speech recognition is running. Say something...");
+
+    // Keep the application running to receive recognition events
+    std::wstring input;
+    std::getline(std::wcin, input);
+    OutputDebugString(L"ddddd");
+    // Stop the recognition session when done
+    continuousSession.StopAsync().get();
+    OutputDebugString(L"eeeee");
+
+}
+
+
+void OnMicrophoneAccessChanged(DeviceAccessInformation sender, DeviceAccessChangedEventArgs args)
+{
+    std::wstring message;
+    switch (args.Status())
+    {
+    case DeviceAccessStatus::Allowed:
+        message = L"Microphone access is now allowed.\n";
+        break;
+    case DeviceAccessStatus::DeniedByUser:
+        message = L"Microphone access is now denied by the user.\n";
+        break;
+    case DeviceAccessStatus::DeniedBySystem:
+        message = L"Microphone access is now denied by the system.\n";
+        break;
+    case DeviceAccessStatus::Unspecified:
+        message = L"Microphone access status is now unspecified.\n";
+        break;
+    }
+
+    // Log the message using OutputDebugString
+    OutputDebugString(message.c_str());
+}
+
+void asyncSpeech()
+{
+
+    CheckMicrophonePermission();
+
+    // Define custom grammar constraints
+    std::vector<winrt::hstring> phrases = { L"Register", L"The", L"Face" };
+
+    // Get the device access information for the microphone
+    auto deviceAccessInfo = DeviceAccessInformation::CreateFromDeviceClass(DeviceClass::AudioCapture);
+
+    // Register for access changed events
+    deviceAccessInfo.AccessChanged(OnMicrophoneAccessChanged);
+
+    // Keep the app running to listen for events
+    OutputDebugString(L"Listening for microphone permission changes...\n");
+    std::wstring input;
+    std::getline(std::wcin, input);
+
+    CheckMicrophonePermission();
+    // Call the function with custom constraints and handler
+    StartContinuousSpeechRecognition(phrases);
+
+}
+
+SensorCapture StartSensors()
+{
     SensorCapture sc = SensorCapture();
     sc.ResearchMode_Startup();
     sc.StartStreaming();
-    //OutputDebugString(L"after function");
+    OutputDebugString(L"after straming");
+    return sc;
+}
+void sendDepth(SensorCapture sc)
+{
 
     std::tuple<UINT16 const*, UINT16 const*> IRsensors = sc.GetDepth();
 
     UINT16 const* sensor1Values = std::get<0>(IRsensors);
     UINT16 const* sensor2Values = std::get<1>(IRsensors);
 
-    std::wostringstream depthString;
-    depthString << L"\n Depth \n";
-    for (int i = 0; i < 262144; i++)
-    {
-        depthString << sensor1Values[i] << ',';
-    }
-    std::wstring dString = depthString.str();
-    OutputDebugString(dString.c_str());
+    //std::wostringstream depthString;
+    //depthString << L"\n Depth \n";
+    //for (int i = 0; i < 262144; i++)
+    //{
+    //    depthString << sensor1Values[i] << ',';
+    //}
+    //std::wstring dString = depthString.str();
+    //OutputDebugString(dString.c_str());
 
-    std::wostringstream abstring;
-    abstring << L"\n ab \n";
-    for (int i = 0; i < 262144; i++)
-    {
-        abstring << sensor2Values[i] << ',';
-    }
-    std::wstring astring = abstring.str();
-    OutputDebugString(astring.c_str());
+    //std::wostringstream abstring;
+    //abstring << L"\n ab \n";
+    //for (int i = 0; i < 262144; i++)
+    //{
+    //    abstring << sensor2Values[i] << ',';
+    //}
+    //std::wstring astring = abstring.str();
+    //OutputDebugString(astring.c_str());
 
     OutputDebugString(L"\n after GetDepth \n");
 
-    winrt::Windows::Foundation::Uri uri2(L"http://192.168.214.246:4028/getdata/ab");
+    winrt::Windows::Foundation::Uri uri2(L"http://192.168.1.25:4028/getdata/ab");
     sc.SendUInt16Array(sensor2Values, uri2);
 
-    winrt::Windows::Foundation::Uri uri1(L"http://192.168.214.246:4028/getdata/depth");
+    winrt::Windows::Foundation::Uri uri1(L"http://192.168.1.25:4028/getdata/depth");
     sc.SendUInt16Array(sensor1Values, uri1);
 
     OutputDebugString(L"\n after Send \n");
 
+
 }
 
+//std::future<void> ListenForUdpMessagesAsync(SensorCapture sc)
+//{
+//    DatagramSocket socket;
+//    OutputDebugString(L"before datareader1111");
+//    socket.MessageReceived([&](const DatagramSocket&, const DatagramSocketMessageReceivedEventArgs& args)
+//        {
+//            try
+//            {
+//                OutputDebugString(L"before datareader");
+//                DataReader reader = args.GetDataReader();
+//                uint32_t messageLength = reader.UnconsumedBufferLength();
+//                winrt::hstring message = reader.ReadString(messageLength);
+//                std::wcout << L"Received message: " << message.c_str() << std::endl;
+//                if (message == L"REGISTER")
+//                {
+//                    sendDepth(sc);
+//                }
+//                else
+//                {
+//                    std::wcout << L"Received message: " << message.c_str() << std::endl;
+//                }
+//            }
+//            catch (const winrt::hresult_error& ex)
+//            {
+//                std::wcerr << L"Error reading message: " << ex.message().c_str() << std::endl;
+//            }
+//        });
+//
+//    const int port = 12543;
+//    co_await socket.BindServiceNameAsync(winrt::to_hstring(port));
+//
+//    std::wcout << L"Listening for UDP messages on port " << port << L"..." << std::endl;
+//}
 
-#pragma endregion Window event handlers
+
+std::future<void> ListenForUdpMessagesAsync(SensorCapture sc)
+{
+    DatagramSocket socket;
+    OutputDebugString(L"before datareader1111");
+    socket.MessageReceived([&](const DatagramSocket&, const DatagramSocketMessageReceivedEventArgs& args)
+        {
+            try
+            {
+                // Read the incoming message
+                OutputDebugString(L"before datareader");
+                DataReader reader = args.GetDataReader();
+                uint32_t messageLength = reader.UnconsumedBufferLength();
+                winrt::hstring message = reader.ReadString(messageLength);
+
+                std::wcout << L"Received message: " << message.c_str() << std::endl;
+
+                // Check if the message is "REGISTER"
+                if (message == L"REGISTER")
+                {
+                    sendDepth(sc);
+                }
+            }
+            catch (const winrt::hresult_error& ex)
+            {
+                std::wcerr << L"Error reading message: " << ex.message().c_str() << std::endl;
+            }
+        });
+
+    // Bind the socket to a specific port
+    const int port = 12543; // Change this to your desired port
+    std::wcout << L"Binding to port " << port << L"..." << std::endl;
+    co_await socket.BindServiceNameAsync(winrt::to_hstring(port));
+
+    std::wcout << L"Listening for UDP messages on port " << port << L"..." << std::endl;
+}
+
+void ListenForUdpMessages(int port, SensorCapture& sc)
+{
+    try
+    {
+        DatagramSocket socket;
+        socket.MessageReceived([&](const DatagramSocket&, const DatagramSocketMessageReceivedEventArgs& args)
+            {
+                try
+                {
+                    // Read the incoming message
+                    DataReader reader = args.GetDataReader();
+                    uint32_t messageLength = reader.UnconsumedBufferLength();
+                    winrt::hstring message = reader.ReadString(messageLength);
+
+                    std::wcout << L"Received message: " << message.c_str() << std::endl;
+
+                    // Check if the message is "REGISTER"
+                    if (message == L"REGISTER")
+                    {
+                        sendDepth(sc);
+                    }
+                }
+                catch (const winrt::hresult_error& ex)
+                {
+                    std::wcerr << L"Error reading message: " << ex.message().c_str() << std::endl;
+                }
+            });
+
+        // Bind the socket to the specified port
+        socket.BindServiceNameAsync(winrt::to_hstring(port)).get();
+        std::wcout << L"Listening for UDP messages on port " << port << L"..." << std::endl;
+
+        // Keep the thread alive
+        while (true)
+        {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    }
+    catch (const winrt::hresult_error& ex)
+    {
+        std::wcerr << L"Socket error: " << ex.message().c_str() << std::endl;
+    }
+}
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
 {
     winrt::init_apartment();
+    SensorCapture sc = StartSensors();
+
+    //auto listenTask = ListenForUdpMessagesAsync(sc);
+    std::thread udpThread(ListenForUdpMessages, 12543, std::ref(sc));
 
     winrt::com_ptr<SamplePlayerMain> main = winrt::make_self<SamplePlayerMain>();
     CoreApplication::Run(*main);

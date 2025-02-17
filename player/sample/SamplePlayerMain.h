@@ -23,9 +23,21 @@
 #include <winrt/Microsoft.Holographic.AppRemoting.h>
 
 #include <chrono>
+#include <sstream>
 
+#include <winrt/Windows.Foundation.Metadata.h>
+#include <winrt/Windows.Ui.Popups.h>
+#include <SensorCapture.h>
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.Foundation.Collections.h>
+#include <iostream>
 #include <DeviceResourcesD3D11Holographic.h>
 #include <SimpleCubeRenderer.h>
+#include <winrt/Windows.Media.SpeechRecognition.h>
+#include <future>
+//#include <speechapi_cxx.h>
+
+using namespace winrt::Windows::Media::SpeechRecognition;
 
 class SamplePlayerMain : public winrt::implements<
                              SamplePlayerMain,
@@ -36,6 +48,7 @@ class SamplePlayerMain : public winrt::implements<
 public:
     SamplePlayerMain();
     ~SamplePlayerMain();
+    winrt::Windows::Media::SpeechRecognition::SpeechRecognizer recognizer;
 
     // Try to (re-)connect to or listen on the hostname/port, that was set during activation of the app.
     void ConnectOrListen();
