@@ -27,9 +27,9 @@ public:
     HMODULE g_hrResearchMode;
     IResearchModeSensorDevice* g_pSensorDevice;
     IResearchModeSensorDeviceConsent* g_pSensorDeviceConsent;
-
+    std::wstring senderIp;
     HANDLE g_imu_consent_event;
-
+    
     ResearchModeSensorConsent g_imu_consent_value;
     //IResearchModeSensor* g_sensors = nullptr;
     IResearchModeSensor* depthSensor;

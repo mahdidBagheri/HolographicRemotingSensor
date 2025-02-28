@@ -1180,6 +1180,7 @@ SensorCapture StartSensors()
     OutputDebugString(L"after straming");
     return sc;
 }
+
 void sendDepth(SensorCapture sc)
 {
 
@@ -1188,71 +1189,21 @@ void sendDepth(SensorCapture sc)
     UINT16 const* sensor1Values = std::get<0>(IRsensors);
     UINT16 const* sensor2Values = std::get<1>(IRsensors);
 
-    //std::wostringstream depthString;
-    //depthString << L"\n Depth \n";
-    //for (int i = 0; i < 262144; i++)
-    //{
-    //    depthString << sensor1Values[i] << ',';
-    //}
-    //std::wstring dString = depthString.str();
-    //OutputDebugString(dString.c_str());
-
-    //std::wostringstream abstring;
-    //abstring << L"\n ab \n";
-    //for (int i = 0; i < 262144; i++)
-    //{
-    //    abstring << sensor2Values[i] << ',';
-    //}
-    //std::wstring astring = abstring.str();
-    //OutputDebugString(astring.c_str());
-
     OutputDebugString(L"\n after GetDepth \n");
-
-    winrt::Windows::Foundation::Uri uri2(L"http://192.168.1.25:4028/getdata/ab");
+    std::wstring uri2s = L"http://" + sc.senderIp + L":4028/getdata/ab";
+    winrt::Windows::Foundation::Uri uri2(uri2s);
+    //winrt::Windows::Foundation::Uri uri2(L"http://{SenderIP}:4028/getdata/ab");
     sc.SendUInt16Array(sensor2Values, uri2);
 
-    winrt::Windows::Foundation::Uri uri1(L"http://192.168.1.25:4028/getdata/depth");
+    std::wstring uri1s = L"http://" + sc.senderIp + L":4028/getdata/depth";
+    //winrt::Windows::Foundation::Uri uri1(L"http://192.168.1.25:4028/getdata/depth");
+    winrt::Windows::Foundation::Uri uri1(uri1s);
     sc.SendUInt16Array(sensor1Values, uri1);
 
     OutputDebugString(L"\n after Send \n");
 
 
 }
-
-//std::future<void> ListenForUdpMessagesAsync(SensorCapture sc)
-//{
-//    DatagramSocket socket;
-//    OutputDebugString(L"before datareader1111");
-//    socket.MessageReceived([&](const DatagramSocket&, const DatagramSocketMessageReceivedEventArgs& args)
-//        {
-//            try
-//            {
-//                OutputDebugString(L"before datareader");
-//                DataReader reader = args.GetDataReader();
-//                uint32_t messageLength = reader.UnconsumedBufferLength();
-//                winrt::hstring message = reader.ReadString(messageLength);
-//                std::wcout << L"Received message: " << message.c_str() << std::endl;
-//                if (message == L"REGISTER")
-//                {
-//                    sendDepth(sc);
-//                }
-//                else
-//                {
-//                    std::wcout << L"Received message: " << message.c_str() << std::endl;
-//                }
-//            }
-//            catch (const winrt::hresult_error& ex)
-//            {
-//                std::wcerr << L"Error reading message: " << ex.message().c_str() << std::endl;
-//            }
-//        });
-//
-//    const int port = 12543;
-//    co_await socket.BindServiceNameAsync(winrt::to_hstring(port));
-//
-//    std::wcout << L"Listening for UDP messages on port " << port << L"..." << std::endl;
-//}
-
 
 std::future<void> ListenForUdpMessagesAsync(SensorCapture sc)
 {
@@ -1262,6 +1213,18 @@ std::future<void> ListenForUdpMessagesAsync(SensorCapture sc)
         {
             try
             {
+                // Get the sender's IP and convert it to a standard string
+                winrt::hstring senderIpHstring = args.RemoteAddress().DisplayName();
+                std::wstring senderIpWide = senderIpHstring.c_str();
+                std::string senderIp(senderIpWide.begin(), senderIpWide.end()); // Convert from wide to narrow string
+                sc.senderIp = senderIpWide;
+                // If you need the port as well
+                winrt::hstring senderPortHstring = args.RemotePort();
+                std::wstring senderPortWide = senderPortHstring.c_str();
+                std::string senderPort(senderPortWide.begin(), senderPortWide.end());
+
+                std::cout << "Message from: " << senderIp << ":" << senderPort << std::endl;
+
                 // Read the incoming message
                 OutputDebugString(L"before datareader");
                 DataReader reader = args.GetDataReader();
@@ -1273,7 +1236,11 @@ std::future<void> ListenForUdpMessagesAsync(SensorCapture sc)
                 // Check if the message is "REGISTER"
                 if (message == L"REGISTER")
                 {
+                    // Now you can use senderIp as a std::string
                     sendDepth(sc);
+
+                    // You can store senderIp as a class member or pass it to other functions
+                    // Example: this->clientIp = senderIp;
                 }
             }
             catch (const winrt::hresult_error& ex)

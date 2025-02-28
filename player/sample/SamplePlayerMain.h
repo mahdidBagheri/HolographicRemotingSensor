@@ -50,6 +50,7 @@ public:
     ~SamplePlayerMain();
     winrt::Windows::Media::SpeechRecognition::SpeechRecognizer recognizer;
 
+
     // Try to (re-)connect to or listen on the hostname/port, that was set during activation of the app.
     void ConnectOrListen();
 
