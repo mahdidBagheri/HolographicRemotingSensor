@@ -248,8 +248,10 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Locator.cpp" />
     <ClCompile Include="lock.cpp" />
     <ClCompile Include="SensorCapture.cpp" />
+    <ClCompile Include="timestamp.cpp" />
     <ClInclude Include=".\pch.h" />
     <ClCompile Include=".\pch.cpp" />
     <ClInclude Include=".\SamplePlayerMain.h" />
@@ -277,9 +279,12 @@
     <ClInclude Include="..\..\common\ShaderStructures.h" />
     <ClInclude Include="..\common\Content\StatusDisplay.h" />
     <ClCompile Include="..\common\Content\StatusDisplay.cpp" />
+    <ClInclude Include="Locator.h" />
     <ClInclude Include="lock.h" />
     <ClInclude Include="ResearchModeApi.h" />
     <ClInclude Include="SensorCapture.h" />
+    <ClInclude Include="timestamp.h" />
+    <ClInclude Include="types.h" />
     <None Include=".\Assets\RemotingLogo.dds">
       <Link>.\%(FileName)%(Extension)</Link>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</DeploymentContent>

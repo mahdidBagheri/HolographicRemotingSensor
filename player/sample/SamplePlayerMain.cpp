@@ -1175,7 +1175,9 @@ void asyncSpeech()
 SensorCapture StartSensors()
 {
     SensorCapture sc = SensorCapture();
+    sc.Locator_Initialize();
     sc.ResearchMode_Startup();
+
     sc.StartStreaming();
     OutputDebugString(L"after straming");
     return sc;
@@ -1185,6 +1187,8 @@ void sendDepth(SensorCapture sc)
 {
 
     std::tuple<UINT16 const*, UINT16 const*> IRsensors = sc.GetDepth();
+
+    sc.senderIp = L"192.168.159.166";
 
     UINT16 const* sensor1Values = std::get<0>(IRsensors);
     UINT16 const* sensor2Values = std::get<1>(IRsensors);
@@ -1196,7 +1200,7 @@ void sendDepth(SensorCapture sc)
     sc.SendUInt16Array(sensor2Values, uri2);
 
     std::wstring uri1s = L"http://" + sc.senderIp + L":4028/getdata/depth";
-    //winrt::Windows::Foundation::Uri uri1(L"http://192.168.1.25:4028/getdata/depth");
+    //winrt::Windows::Foundation::Uri uri1(L"http://192.168.159.246:4028/getdata/depth");
     winrt::Windows::Foundation::Uri uri1(uri1s);
     sc.SendUInt16Array(sensor1Values, uri1);
 
@@ -1204,6 +1208,23 @@ void sendDepth(SensorCapture sc)
 
 
 }
+
+
+
+void sendLocation(SensorCapture sc)
+{
+    winrt::Windows::Foundation::Numerics::float4x4 loc2World = sc.GetLocation();
+
+    std::wstring uri1s = L"http://" + sc.senderIp + L":4028/getdata/campose";
+    //winrt::Windows::Foundation::Uri uri1(L"http://192.168.159.246:4028/getdata/campose");
+    winrt::Windows::Foundation::Uri uri1(uri1s);
+
+    sc.SendFloat4x4Matrix(loc2World, uri1);
+    OutputDebugString(L"\n after campose Send \n");
+
+}
+
+
 
 std::future<void> ListenForUdpMessagesAsync(SensorCapture sc)
 {
@@ -1277,6 +1298,9 @@ void ListenForUdpMessages(int port, SensorCapture& sc)
                     if (message == L"REGISTER")
                     {
                         sendDepth(sc);
+                        sendLocation(sc);
+
+                        
                     }
                 }
                 catch (const winrt::hresult_error& ex)

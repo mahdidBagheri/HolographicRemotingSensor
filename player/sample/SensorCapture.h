@@ -4,13 +4,15 @@
 #include <ResearchModeApi.h>
 #include <vector>
 
-#include <winrt/Windows.Foundation.Numerics.h>
-#include <winrt/Windows.Perception.Spatial.h>
 #include <winrt/Windows.Perception.Spatial.Preview.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Web.Http.h>
 #include <winrt/Windows.Data.Json.h>
 #include <iostream>
+#include <winrt/Windows.Foundation.Numerics.h>
+#include <winrt/Windows.Perception.h>
+#include <winrt/Windows.Perception.Spatial.h>
+
 
 using namespace winrt::Windows::Foundation::Numerics;
 using namespace winrt::Windows::Perception::Spatial;
@@ -21,9 +23,12 @@ class SensorCapture
 public:
 
     SensorCapture();
+    int OverrideWorldCoordinateSystem(void* scs_ptr);
+    void Locator_Initialize();
     static SensorCapture* instance;
     uint32_t g_sensor_count;
-    std::optional<winrt::Windows::Perception::Spatial::SpatialLocator> g_locator;
+    //std::optional<winrt::Windows::Perception::Spatial::SpatialLocator> g_locator;
+    //winrt::Windows::Perception::Spatial::SpatialLocator g_locator;
     HMODULE g_hrResearchMode;
     IResearchModeSensorDevice* g_pSensorDevice;
     IResearchModeSensorDeviceConsent* g_pSensorDeviceConsent;
@@ -33,6 +38,12 @@ public:
     ResearchModeSensorConsent g_imu_consent_value;
     //IResearchModeSensor* g_sensors = nullptr;
     IResearchModeSensor* depthSensor;
+
+    winrt::Windows::Foundation::Numerics::float4x4 Locator_Locate(winrt::Windows::Perception::PerceptionTimestamp const& timestamp, winrt::Windows::Perception::Spatial::SpatialLocator const& locator, winrt::Windows::Perception::Spatial::SpatialCoordinateSystem const& world);
+    winrt::Windows::Foundation::Numerics::float4x4 Locator_GetTransformTo(winrt::Windows::Perception::Spatial::SpatialCoordinateSystem const& src, winrt::Windows::Perception::Spatial::SpatialCoordinateSystem const& dst);
+    winrt::Windows::Perception::Spatial::SpatialCoordinateSystem Locator_GetWorldCoordinateSystem();
+    void Locator_OverrideWorldCoordinateSystem(winrt::Windows::Perception::Spatial::SpatialCoordinateSystem const& scs);
+    winrt::Windows::Perception::Spatial::SpatialCoordinateSystem Locator_SanitizeSpatialCoordinateSystem(winrt::Windows::Perception::Spatial::SpatialCoordinateSystem const& scs);
 
     bool g_ready;
 
@@ -59,23 +70,12 @@ public:
     std::tuple<UINT16 const*, UINT16 const*> GetDepth();
     void ReleaseSensor();
     void SendUInt16Array(UINT16 const* array, winrt::Windows::Foundation::Uri uri);
+    winrt::Windows::Foundation::Numerics::float4x4 GetLocation();
+    void SendFloat4x4Matrix(winrt::Windows::Foundation::Numerics::float4x4 matrix, winrt::Windows::Foundation::Uri uri);
+    winrt::Windows::Foundation::Numerics::float4x4 hololens_location;
     IResearchModeSensorFrame* pSensorFrame; // Release
     void ResearchMode_CameraAccessCallback(ResearchModeSensorConsent consent);
 
-    //IResearchModeSensor* ResearchMode_GetSensor(ResearchModeSensorType type);
-    //winrt::Windows::Foundation::Numerics::float4x4 ResearchMode_GetRigNodeWorldPose(UINT64 host_ticks);
-    //bool ResearchMode_WaitForConsent(IResearchModeSensor* sensor);
-    //bool ResearchMode_GetIntrinsics(IResearchModeSensor* sensor, std::vector<float>& uv2x, std::vector<float>& uv2y, std::vector<float>& mapx, std::vector<float>& mapy, float K[4]);
-    //bool ResearchMode_GetExtrinsics(IResearchModeSensor* sensor, DirectX::XMFLOAT4X4& extrinsics);
-    //void ResearchMode_ExecuteSensorLoop(IResearchModeSensor* sensor, HOOK_RM_PROC hook, void* param, HANDLE event_stop);
-    //void ResearchMode_ProcessSample_VLC(IResearchModeSensorFrame* pSensorFrame, HOOK_RM_VLC_PROC hook, void* param);
-    //void ResearchMode_ProcessSample_ZHT(IResearchModeSensorFrame* pSensorFrame, HOOK_RM_ZHT_PROC hook, void* param);
-    //void ResearchMode_ProcessSample_ZLT(IResearchModeSensorFrame* pSensorFrame, HOOK_RM_ZLT_PROC hook, void* param);
-    //void ResearchMode_ProcessSample_ACC(IResearchModeSensorFrame* pSensorFrame, HOOK_RM_ACC_PROC hook, void* param);
-    //void ResearchMode_ProcessSample_GYR(IResearchModeSensorFrame* pSensorFrame, HOOK_RM_GYR_PROC hook, void* param);
-    //void ResearchMode_ProcessSample_MAG(IResearchModeSensorFrame* pSensorFrame, HOOK_RM_MAG_PROC hook, void* param);
-
-    //void ResearchMode_SetEyeSelection(bool enable);
 
     HANDLE g_camera_consent_event;
     ResearchModeSensorConsent g_camera_consent_value;
