@@ -23,6 +23,7 @@ class SensorCapture
 public:
 
     SensorCapture();
+    winrt::Windows::Foundation::Numerics::float4x4 hololens_location;
     int OverrideWorldCoordinateSystem(void* scs_ptr);
     void Locator_Initialize();
     static SensorCapture* instance;
@@ -67,12 +68,12 @@ public:
     void ResearchMode_Startup();
     void StartStreaming();
     //void ResearchMode_Cleanup();
-    std::tuple<UINT16 const*, UINT16 const*> GetDepth();
+    std::tuple<UINT16 const*, UINT16 const*, float4x4> GetDepth();
     void ReleaseSensor();
     void SendUInt16Array(UINT16 const* array, winrt::Windows::Foundation::Uri uri);
     winrt::Windows::Foundation::Numerics::float4x4 GetLocation();
     void SendFloat4x4Matrix(winrt::Windows::Foundation::Numerics::float4x4 matrix, winrt::Windows::Foundation::Uri uri);
-    winrt::Windows::Foundation::Numerics::float4x4 hololens_location;
+
     IResearchModeSensorFrame* pSensorFrame; // Release
     void ResearchMode_CameraAccessCallback(ResearchModeSensorConsent consent);
 

@@ -165,7 +165,7 @@ void SensorCapture::StartStreaming()
     OutputDebugString(L"STR0");
 }
 
-std::tuple<UINT16 const*, UINT16 const*> SensorCapture::GetDepth()
+std::tuple<UINT16 const*, UINT16 const*, float4x4 > SensorCapture::GetDepth()
 {
     OutputDebugString(L"SEN0");
 
@@ -187,7 +187,7 @@ std::tuple<UINT16 const*, UINT16 const*> SensorCapture::GetDepth()
     this->pSensorFrame->GetTimeStamp(&timestamp);
 
     //winrt::Windows::Perception::Spatial::SpatialCoordinateSystem world = Locator_GetWorldCoordinateSystem();
-    this->hololens_location = Locator_Locate(Timestamp_QPCToPerception(timestamp.SensorTicks), g_locator, g_world);
+    hololens_location = Locator_Locate(Timestamp_QPCToPerception(timestamp.HostTicks), g_locator, g_world);
 
     this->pSensorFrame->QueryInterface(IID_PPV_ARGS(&pDepthFrame));
 
@@ -197,7 +197,7 @@ std::tuple<UINT16 const*, UINT16 const*> SensorCapture::GetDepth()
     pDepthFrame->Release();
 
     OutputDebugString(L"SEN3");
-    std::tuple<UINT16 const*, UINT16 const*> IRsensors = std::make_tuple(pDepth, pAbImage);
+    std::tuple<UINT16 const*, UINT16 const*, float4x4> IRsensors = std::make_tuple(pDepth, pAbImage, hololens_location);
     return IRsensors;
 }
 
@@ -248,10 +248,10 @@ void SensorCapture::SendUInt16Array(UINT16 const* array, winrt::Windows::Foundat
     }
 }
 
-winrt::Windows::Foundation::Numerics::float4x4 SensorCapture::GetLocation()
-{
-    return this->hololens_location;
-}
+//winrt::Windows::Foundation::Numerics::float4x4 SensorCapture::GetLocation()
+//{
+//    return this->hololens_location;
+//}
 
 void SensorCapture::SendFloat4x4Matrix(winrt::Windows::Foundation::Numerics::float4x4 matrix,
     winrt::Windows::Foundation::Uri uri) {
@@ -260,34 +260,27 @@ void SensorCapture::SendFloat4x4Matrix(winrt::Windows::Foundation::Numerics::flo
         winrt::Windows::Web::Http::HttpClient client;
 
         // Create JSON structure for the matrix
-        std::wstring jsonString = L"{\"matrix\": [";
+        std::wstring jsonString = L"{\"data\": ";
 
         // float4x4 has m11 through m44 members representing the 4x4 matrix elements
         // First row
-        jsonString += L"[" + std::to_wstring(matrix.m11) + L","
+        jsonString += L"["
+            + std::to_wstring(matrix.m11) + L","
             + std::to_wstring(matrix.m12) + L","
             + std::to_wstring(matrix.m13) + L","
-            + std::to_wstring(matrix.m14) + L"],";
-
-        // Second row
-        jsonString += L"[" + std::to_wstring(matrix.m21) + L","
+            + std::to_wstring(matrix.m14) + L","
+            + std::to_wstring(matrix.m21) + L","
             + std::to_wstring(matrix.m22) + L","
             + std::to_wstring(matrix.m23) + L","
-            + std::to_wstring(matrix.m24) + L"],";
-
-        // Third row
-        jsonString += L"[" + std::to_wstring(matrix.m31) + L","
+            + std::to_wstring(matrix.m24) + L","
+            + std::to_wstring(matrix.m31) + L","
             + std::to_wstring(matrix.m32) + L","
             + std::to_wstring(matrix.m33) + L","
-            + std::to_wstring(matrix.m34) + L"],";
-
-        // Fourth row
-        jsonString += L"[" + std::to_wstring(matrix.m41) + L","
+            + std::to_wstring(matrix.m34) + L","
+            + std::to_wstring(matrix.m41) + L","
             + std::to_wstring(matrix.m42) + L","
             + std::to_wstring(matrix.m43) + L","
-            + std::to_wstring(matrix.m44) + L"]";
-
-        jsonString += L"]}";
+            + std::to_wstring(matrix.m44) + L"]}";
 
         OutputDebugString(jsonString.c_str());
 

@@ -1186,12 +1186,13 @@ SensorCapture StartSensors()
 void sendDepth(SensorCapture sc)
 {
 
-    std::tuple<UINT16 const*, UINT16 const*> IRsensors = sc.GetDepth();
+    std::tuple<UINT16 const*, UINT16 const*, float4x4> IRsensors = sc.GetDepth();
 
-    sc.senderIp = L"192.168.159.166";
+    sc.senderIp = L"192.168.159.246";
 
     UINT16 const* sensor1Values = std::get<0>(IRsensors);
     UINT16 const* sensor2Values = std::get<1>(IRsensors);
+    float4x4 loc = std::get<2>(IRsensors);
 
     OutputDebugString(L"\n after GetDepth \n");
     std::wstring uri2s = L"http://" + sc.senderIp + L":4028/getdata/ab";
@@ -1204,25 +1205,26 @@ void sendDepth(SensorCapture sc)
     winrt::Windows::Foundation::Uri uri1(uri1s);
     sc.SendUInt16Array(sensor1Values, uri1);
 
+    std::wstring uri3s = L"http://" + sc.senderIp + L":4028/getdata/campose";
+    //winrt::Windows::Foundation::Uri uri1(L"http://192.168.159.246:4028/getdata/depth");
+    winrt::Windows::Foundation::Uri uri3(uri3s);
+    sc.SendFloat4x4Matrix(loc, uri3);
+
     OutputDebugString(L"\n after Send \n");
-
-
 }
 
-
-
-void sendLocation(SensorCapture sc)
-{
-    winrt::Windows::Foundation::Numerics::float4x4 loc2World = sc.GetLocation();
-
-    std::wstring uri1s = L"http://" + sc.senderIp + L":4028/getdata/campose";
-    //winrt::Windows::Foundation::Uri uri1(L"http://192.168.159.246:4028/getdata/campose");
-    winrt::Windows::Foundation::Uri uri1(uri1s);
-
-    sc.SendFloat4x4Matrix(loc2World, uri1);
-    OutputDebugString(L"\n after campose Send \n");
-
-}
+//void sendLocation(SensorCapture sc)
+//{
+//    sc.senderIp = L"192.168.159.246";
+//    winrt::Windows::Foundation::Numerics::float4x4 loc2World = sc.GetLocation();
+//
+//    std::wstring uri1s = L"http://192.168.159.246:4028/getdata/campose";
+//    //winrt::Windows::Foundation::Uri uri1(L"http://192.168.159.246:4028/getdata/campose");
+//    winrt::Windows::Foundation::Uri uri1(uri1s);
+//
+//    sc.SendFloat4x4Matrix(loc2World, uri1);
+//    OutputDebugString(L"\n after campose Send \n");
+//}
 
 
 
@@ -1298,7 +1300,7 @@ void ListenForUdpMessages(int port, SensorCapture& sc)
                     if (message == L"REGISTER")
                     {
                         sendDepth(sc);
-                        sendLocation(sc);
+                        //sendLocation(sc);
 
                         
                     }
