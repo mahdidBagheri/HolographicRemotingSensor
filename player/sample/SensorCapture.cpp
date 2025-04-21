@@ -21,6 +21,7 @@ static SpatialCoordinateSystem g_world_override = nullptr;
 static SpatialLocator g_locator = nullptr;
 static SpatialStationaryFrameOfReference g_referenceFrame = nullptr;
 static SpatialCoordinateSystem g_world = nullptr;
+static SpatialCoordinateSystem user_world = nullptr;
 
 static ResearchModeSensorType const g_sensor_lut[] =
 {
@@ -80,6 +81,7 @@ void SensorCapture::Locator_Initialize()
     g_locator = SpatialLocator::GetDefault();
     g_referenceFrame = g_locator.CreateStationaryFrameOfReferenceAtCurrentLocation();
     g_world = g_referenceFrame.CoordinateSystem();
+    this->set_g_world(g_referenceFrame.CoordinateSystem());
     int a = 0;
     OutputDebugString(L"AAA");
 
@@ -88,11 +90,13 @@ void SensorCapture::Locator_Initialize()
 winrt::Windows::Foundation::Numerics::float4x4 SensorCapture::Locator_Locate(winrt::Windows::Perception::PerceptionTimestamp const& timestamp, winrt::Windows::Perception::Spatial::SpatialLocator const& locator, winrt::Windows::Perception::Spatial::SpatialCoordinateSystem const& world)
 {
     auto location = locator.TryLocateAtTimestamp(timestamp, world);
+    //auto location = locator.TryGet(timestamp, world);
     return location ? (make_float4x4_from_quaternion(location.Orientation()) * make_float4x4_translation(location.Position())) : winrt::Windows::Foundation::Numerics::float4x4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
 winrt::Windows::Foundation::Numerics::float4x4 SensorCapture::Locator_GetTransformTo(winrt::Windows::Perception::Spatial::SpatialCoordinateSystem const& src, winrt::Windows::Perception::Spatial::SpatialCoordinateSystem const& dst)
 {
+
     auto location = src.TryGetTransformTo(dst);
     return location ? location.Value() : winrt::Windows::Foundation::Numerics::float4x4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
@@ -113,6 +117,21 @@ winrt::Windows::Perception::Spatial::SpatialCoordinateSystem SensorCapture::Loca
 {
     winrt::Windows::Perception::Spatial::Preview::SpatialGraphInteropFrameOfReferencePreview sgiforp = winrt::Windows::Perception::Spatial::Preview::SpatialGraphInteropPreview::TryCreateFrameOfReference(scs);
     return sgiforp ? sgiforp.CoordinateSystem() : nullptr;
+}
+
+void SensorCapture::set_g_world(SpatialCoordinateSystem world)
+{
+    g_world = world;
+}
+
+void SensorCapture::set_g_user_world(SpatialCoordinateSystem world)
+{
+    user_world = world;
+}
+
+SpatialCoordinateSystem SensorCapture::get_g_user_world()
+{
+    return user_world;
 }
 
 void SensorCapture::ResearchMode_CameraAccessCallback(ResearchModeSensorConsent consent)
@@ -153,6 +172,7 @@ void SensorCapture::ResearchMode_Startup()
     pSensorDevicePerception->Release();
     g_locator = SpatialGraphInteropPreview::CreateLocatorForNode(rigNodeId);
     //g_world = Locator_GetWorldCoordinateSystem();
+    //g_world = g_locator.CreateStationaryFrameOfReferenceAtCurrentLocation().CoordinateSystem();
 
     //this->g_locator = SpatialGraphInteropPreview::CreateLocatorForNode(rigNodeId);
     //g_ready = true;
@@ -187,6 +207,8 @@ std::tuple<UINT16 const*, UINT16 const*, float4x4 > SensorCapture::GetDepth()
     this->pSensorFrame->GetTimeStamp(&timestamp);
 
     //winrt::Windows::Perception::Spatial::SpatialCoordinateSystem world = Locator_GetWorldCoordinateSystem();
+    auto t = g_world.TryGetTransformTo(user_world).Value();
+
     hololens_location = Locator_Locate(Timestamp_QPCToPerception(timestamp.HostTicks), g_locator, g_world);
 
     this->pSensorFrame->QueryInterface(IID_PPV_ARGS(&pDepthFrame));

@@ -46,6 +46,11 @@ public:
     void Locator_OverrideWorldCoordinateSystem(winrt::Windows::Perception::Spatial::SpatialCoordinateSystem const& scs);
     winrt::Windows::Perception::Spatial::SpatialCoordinateSystem Locator_SanitizeSpatialCoordinateSystem(winrt::Windows::Perception::Spatial::SpatialCoordinateSystem const& scs);
 
+    static void set_g_world(SpatialCoordinateSystem world);
+    static void set_g_user_world(SpatialCoordinateSystem world);
+
+    SpatialCoordinateSystem get_g_user_world();
+
     bool g_ready;
 
     int const RM_ZHT_WIDTH = 512;
@@ -67,8 +72,10 @@ public:
 
     void ResearchMode_Startup();
     void StartStreaming();
-    //void ResearchMode_Cleanup();
     std::tuple<UINT16 const*, UINT16 const*, float4x4> GetDepth();
+    //std::tuple<UINT16 const*, UINT16 const*, float4x4> GetDepth(SpatialCoordinateSystem globalStationaryCoordinateSystem);
+    //void ResearchMode_Cleanup();
+    //std::tuple<UINT16 const*, UINT16 const*, float4x4> GetDepth();
     void ReleaseSensor();
     void SendUInt16Array(UINT16 const* array, winrt::Windows::Foundation::Uri uri);
     winrt::Windows::Foundation::Numerics::float4x4 GetLocation();

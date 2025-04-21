@@ -139,6 +139,8 @@ HolographicFrame SamplePlayerMain::Update(float deltaTimeInSeconds, const Hologr
         SpatialCoordinateSystem coordinateSystem =
             m_attachedFrameOfReference.GetStationaryCoordinateSystemAtTimestamp(prevPrediction.Timestamp());
 
+        
+
         auto poseIterator = prevPrediction.CameraPoses().First();
         if (poseIterator.HasCurrent())
         {
@@ -152,6 +154,7 @@ HolographicFrame SamplePlayerMain::Update(float deltaTimeInSeconds, const Hologr
         }
 
         focusPointCoordinateSystem = coordinateSystem;
+
         focusPointPosition = m_statusDisplay->GetPosition();
     }
 
@@ -199,11 +202,16 @@ HolographicFrame SamplePlayerMain::Update(float deltaTimeInSeconds, const Hologr
     m_deviceResources->EnsureCameraResources(
         holographicFrame, holographicFrame.CurrentPrediction(), focusPointCoordinateSystem, focusPointPosition);
 
+    if (m_sensorCapture->get_g_user_world() == nullptr)
+    {
+        m_sensorCapture->set_g_user_world(m_userSpatialFrameOfReference.CoordinateSystem());
+    }
+
 #ifdef ENABLE_USER_COORDINATE_SYSTEM_SAMPLE
     if (m_playerContext.ConnectionState() == ConnectionState::Connected && !m_trackingLost && m_userSpatialFrameOfReference != nullptr)
     {
         SpatialCoordinateSystem userCoordinateSystem = m_userSpatialFrameOfReference.CoordinateSystem();
-
+        //m_sensorCapture->set_g_world(userCoordinateSystem);
         try
         {
             m_playerContext.UpdateUserSpatialFrameOfReference(userCoordinateSystem);
@@ -234,6 +242,7 @@ void SamplePlayerMain::Render(const HolographicFrame& holographicFrame)
             if (m_attachedFrameOfReference)
             {
                 coordinateSystem = m_attachedFrameOfReference.GetStationaryCoordinateSystemAtTimestamp(prediction.Timestamp());
+                //m_sensorCapture->set_g_world(coordinateSystem);
             }
 
             // Retrieve information about any pending render target size change requests
@@ -379,6 +388,11 @@ void SamplePlayerMain::Render(const HolographicFrame& holographicFrame)
 IFrameworkView SamplePlayerMain::CreateView()
 {
     return *this;
+}
+
+void SamplePlayerMain::SetSensorCapture(SensorCapture* sc)
+{
+    m_sensorCapture = std::move(sc);
 }
 
 #pragma endregion IFrameworkViewSource methods
@@ -1013,164 +1027,7 @@ void SamplePlayerMain::OnWindowClosed(const CoreWindow& sender, const CoreWindow
     m_windowClosed = true;
 }
 
-#include <winrt/Windows.Media.Capture.h>;
-#include <iostream>;
-#include <windows.foundation.h>
-
-using namespace winrt::Windows::Media::Capture;
-
-void CheckMicrophonePermission()
-{
-    // Get the device access information for the microphone
-    auto deviceAccessInfo = DeviceAccessInformation::CreateFromDeviceClass(DeviceClass::AudioCapture);
-
-    // Check the current access status
-    auto accessStatus = deviceAccessInfo.CurrentStatus();
-    OutputDebugString(L"Microphone ???????");
-    switch (accessStatus)
-    {
-    case DeviceAccessStatus::Allowed:
-        OutputDebugString(L"Microphone access is allowed.");
-        break;
-    case DeviceAccessStatus::DeniedByUser:
-        OutputDebugString(L"Microphone access is denied by the user.");
-        break;
-    case DeviceAccessStatus::DeniedBySystem:
-        OutputDebugString(L"Microphone access is denied by the system.");
-        break;
-    case DeviceAccessStatus::Unspecified:
-        OutputDebugString(L"Microphone access status is unspecified.");
-        break;
-    }
-}
-
 #pragma endregion Window event handlers
-
-
-
-// Function to handle continuous speech recognition
-void StartContinuousSpeechRecognition(const std::vector<winrt::hstring>& phrases)
-{
-    winrt::hstring tag = L"tag";
-    OutputDebugString(L"aaaaa");
-    //SpeechRecognitionListConstraint listConstraint(phrases, tag);
-    //std::vector<SpeechRecognitionListConstraint> constraints = { listConstraint };
-
-    // Define a custom result handler
-    auto resultHandler = [](const SpeechContinuousRecognitionResultGeneratedEventArgs& args)
-        {
-            if (args.Result().Status() == SpeechRecognitionResultStatus::Success)
-            {
-                OutputDebugString(L"1111");
-                std::wcout << L"Custom Handler - Recognized: " << args.Result().Text().c_str() << std::endl;
-            }
-            else
-            {
-                OutputDebugString(L"1112");
-                std::wcout << L"Custom Handler - Recognition failed." << std::endl;
-            }
-        };
-    // Create an instance of the SpeechRecognizer
-    SpeechRecognizer recognizer;
-
-    // Convert std::vector<std::wstring> to IVector<hstring>
-    IVector<hstring> phraseList = single_threaded_vector<hstring>();
-    for (const auto& phrase : phrases)
-    {
-        phraseList.Append(winrt::hstring(phrase));
-    }
-    OutputDebugString(L"bbbbb");
-    // Create a SpeechRecognitionListConstraint
-    SpeechRecognitionListConstraint listConstraint(phraseList);
-
-    // Add the constraint to the recognizer
-    recognizer.Constraints().Append(listConstraint);
-
-    // Compile the constraints
-    recognizer.CompileConstraintsAsync().get();
-
-    // Set up the continuous recognition session
-    auto continuousSession = recognizer.ContinuousRecognitionSession();
-
-    // Register the custom result handler
-    continuousSession.ResultGenerated([resultHandler](const SpeechContinuousRecognitionSession&, const SpeechContinuousRecognitionResultGeneratedEventArgs& args)
-        {
-            resultHandler(args);
-        });
-    OutputDebugString(L"ccccc");
-    continuousSession.Completed([](const SpeechContinuousRecognitionSession&, const SpeechContinuousRecognitionCompletedEventArgs&)
-        {
-            OutputDebugString(L"Recognition session completed.");
-        });
-
-    //continuousSession.Canceled([](const SpeechContinuousRecognitionSession&, const SpeechRecognitionContinuousRecognitionCanceledEventArgs& args)
-    //    {
-    //        std::wcout << L"Recognition session canceled: " << args.Result().Text().c_str() << std::endl;
-    //    });
-
-    // Start the continuous recognition session
-    continuousSession.StartAsync().get();
-
-    OutputDebugString(L"Speech recognition is running. Say something...");
-
-    // Keep the application running to receive recognition events
-    std::wstring input;
-    std::getline(std::wcin, input);
-    OutputDebugString(L"ddddd");
-    // Stop the recognition session when done
-    continuousSession.StopAsync().get();
-    OutputDebugString(L"eeeee");
-
-}
-
-
-void OnMicrophoneAccessChanged(DeviceAccessInformation sender, DeviceAccessChangedEventArgs args)
-{
-    std::wstring message;
-    switch (args.Status())
-    {
-    case DeviceAccessStatus::Allowed:
-        message = L"Microphone access is now allowed.\n";
-        break;
-    case DeviceAccessStatus::DeniedByUser:
-        message = L"Microphone access is now denied by the user.\n";
-        break;
-    case DeviceAccessStatus::DeniedBySystem:
-        message = L"Microphone access is now denied by the system.\n";
-        break;
-    case DeviceAccessStatus::Unspecified:
-        message = L"Microphone access status is now unspecified.\n";
-        break;
-    }
-
-    // Log the message using OutputDebugString
-    OutputDebugString(message.c_str());
-}
-
-void asyncSpeech()
-{
-
-    CheckMicrophonePermission();
-
-    // Define custom grammar constraints
-    std::vector<winrt::hstring> phrases = { L"Register", L"The", L"Face" };
-
-    // Get the device access information for the microphone
-    auto deviceAccessInfo = DeviceAccessInformation::CreateFromDeviceClass(DeviceClass::AudioCapture);
-
-    // Register for access changed events
-    deviceAccessInfo.AccessChanged(OnMicrophoneAccessChanged);
-
-    // Keep the app running to listen for events
-    OutputDebugString(L"Listening for microphone permission changes...\n");
-    std::wstring input;
-    std::getline(std::wcin, input);
-
-    CheckMicrophonePermission();
-    // Call the function with custom constraints and handler
-    StartContinuousSpeechRecognition(phrases);
-
-}
 
 SensorCapture StartSensors()
 {
@@ -1188,7 +1045,8 @@ void sendDepth(SensorCapture sc)
 
     std::tuple<UINT16 const*, UINT16 const*, float4x4> IRsensors = sc.GetDepth();
 
-    sc.senderIp = L"192.168.159.246";
+    sc.senderIp = L"192.168.31.243";
+    //sc.senderIp = L"192.168.6.246";
 
     UINT16 const* sensor1Values = std::get<0>(IRsensors);
     UINT16 const* sensor2Values = std::get<1>(IRsensors);
@@ -1201,32 +1059,17 @@ void sendDepth(SensorCapture sc)
     sc.SendUInt16Array(sensor2Values, uri2);
 
     std::wstring uri1s = L"http://" + sc.senderIp + L":4028/getdata/depth";
-    //winrt::Windows::Foundation::Uri uri1(L"http://192.168.159.246:4028/getdata/depth");
+    //winrt::Windows::Foundation::Uri uri1(L"http://192.168.31.243:4028/getdata/depth");
     winrt::Windows::Foundation::Uri uri1(uri1s);
     sc.SendUInt16Array(sensor1Values, uri1);
 
     std::wstring uri3s = L"http://" + sc.senderIp + L":4028/getdata/campose";
-    //winrt::Windows::Foundation::Uri uri1(L"http://192.168.159.246:4028/getdata/depth");
+    //winrt::Windows::Foundation::Uri uri1(L"http://192.168.31.243:4028/getdata/depth");
     winrt::Windows::Foundation::Uri uri3(uri3s);
     sc.SendFloat4x4Matrix(loc, uri3);
 
     OutputDebugString(L"\n after Send \n");
 }
-
-//void sendLocation(SensorCapture sc)
-//{
-//    sc.senderIp = L"192.168.159.246";
-//    winrt::Windows::Foundation::Numerics::float4x4 loc2World = sc.GetLocation();
-//
-//    std::wstring uri1s = L"http://192.168.159.246:4028/getdata/campose";
-//    //winrt::Windows::Foundation::Uri uri1(L"http://192.168.159.246:4028/getdata/campose");
-//    winrt::Windows::Foundation::Uri uri1(uri1s);
-//
-//    sc.SendFloat4x4Matrix(loc2World, uri1);
-//    OutputDebugString(L"\n after campose Send \n");
-//}
-
-
 
 std::future<void> ListenForUdpMessagesAsync(SensorCapture sc)
 {
@@ -1336,6 +1179,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
     std::thread udpThread(ListenForUdpMessages, 12543, std::ref(sc));
 
     winrt::com_ptr<SamplePlayerMain> main = winrt::make_self<SamplePlayerMain>();
+    main->SetSensorCapture( &sc );
     CoreApplication::Run(*main);
+
     return 0;
 }

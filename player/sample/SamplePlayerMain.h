@@ -48,6 +48,7 @@ class SamplePlayerMain : public winrt::implements<
 public:
     SamplePlayerMain();
     ~SamplePlayerMain();
+
     winrt::Windows::Media::SpeechRecognition::SpeechRecognizer recognizer;
 
 
@@ -67,7 +68,8 @@ public:
 public:
     // IFrameworkViewSource methods
     winrt::Windows::ApplicationModel::Core::IFrameworkView CreateView();
-
+    void SetSensorCapture(SensorCapture* sc);
+    SensorCapture* m_sensorCapture = nullptr;
     // IFrameworkView methods
     void Initialize(const winrt::Windows::ApplicationModel::Core::CoreApplicationView& applicationView);
     void SetWindow(const winrt::Windows::UI::Core::CoreWindow& window);

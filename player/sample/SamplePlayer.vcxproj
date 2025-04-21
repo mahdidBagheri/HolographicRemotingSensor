@@ -217,7 +217,7 @@
       <SDLCheck>true</SDLCheck>
       <UseFullPaths>false</UseFullPaths>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>UNICODE;_UNICODE;_WINDOWS;Win32</PreprocessorDefinitions>
+      <PreprocessorDefinitions>UNICODE;_UNICODE;_WINDOWS;Win32;ENABLE_USER_COORDINATE_SYSTEM_SAMPLE</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
     </ClCompile>
     <ResourceCompile>
