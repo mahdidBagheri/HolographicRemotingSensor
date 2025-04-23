@@ -47,6 +47,7 @@ public:
     winrt::Windows::Perception::Spatial::SpatialCoordinateSystem Locator_SanitizeSpatialCoordinateSystem(winrt::Windows::Perception::Spatial::SpatialCoordinateSystem const& scs);
 
     static void set_g_world(SpatialCoordinateSystem world);
+    SpatialCoordinateSystem get_g_world();
     static void set_g_user_world(SpatialCoordinateSystem world);
 
     SpatialCoordinateSystem get_g_user_world();

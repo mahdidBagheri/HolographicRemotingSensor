@@ -80,7 +80,7 @@ void SensorCapture::Locator_Initialize()
 
     g_locator = SpatialLocator::GetDefault();
     g_referenceFrame = g_locator.CreateStationaryFrameOfReferenceAtCurrentLocation();
-    g_world = g_referenceFrame.CoordinateSystem();
+    //g_world = g_referenceFrame.CoordinateSystem();
     this->set_g_world(g_referenceFrame.CoordinateSystem());
     int a = 0;
     OutputDebugString(L"AAA");
@@ -122,6 +122,11 @@ winrt::Windows::Perception::Spatial::SpatialCoordinateSystem SensorCapture::Loca
 void SensorCapture::set_g_world(SpatialCoordinateSystem world)
 {
     g_world = world;
+}
+
+SpatialCoordinateSystem SensorCapture::get_g_world()
+{
+    return g_world;
 }
 
 void SensorCapture::set_g_user_world(SpatialCoordinateSystem world)

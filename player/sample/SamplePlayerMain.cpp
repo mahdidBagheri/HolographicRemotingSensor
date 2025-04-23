@@ -133,12 +133,17 @@ HolographicFrame SamplePlayerMain::Update(float deltaTimeInSeconds, const Hologr
     // Note, this is done with the data from the previous frame before the next wait to save CPU time and get the remote frame presented as
     // fast as possible. This also means that focus point and status display position are one frame behind which is a reasonable tradeoff
     // for the time we win.
+
     if (prevHolographicFrame != nullptr && m_attachedFrameOfReference != nullptr)
     {
         HolographicFramePrediction prevPrediction = prevHolographicFrame.CurrentPrediction();
         SpatialCoordinateSystem coordinateSystem =
             m_attachedFrameOfReference.GetStationaryCoordinateSystemAtTimestamp(prevPrediction.Timestamp());
 
+        if (m_sensorCapture->get_g_world() == nullptr)
+        {
+            //m_sensorCapture->set_g_world(coordinateSystem);
+        }
         
 
         auto poseIterator = prevPrediction.CameraPoses().First();
@@ -205,6 +210,8 @@ HolographicFrame SamplePlayerMain::Update(float deltaTimeInSeconds, const Hologr
     if (m_sensorCapture->get_g_user_world() == nullptr)
     {
         m_sensorCapture->set_g_user_world(m_userSpatialFrameOfReference.CoordinateSystem());
+        
+
     }
 
 #ifdef ENABLE_USER_COORDINATE_SYSTEM_SAMPLE
