@@ -174,6 +174,13 @@ void SensorCapture::ResearchMode_Startup()
     g_pSensorDevice->QueryInterface(IID_PPV_ARGS(&pSensorDevicePerception));
     OutputDebugString(L"ego4");
     pSensorDevicePerception->GetRigNodeId(&rigNodeId);
+
+    //IResearchModeCameraSensor* m_pDepthCameraSensor = nullptr;
+    //depthSensor->QueryInterface(IID_PPV_ARGS(&m_pDepthCameraSensor));
+    //DirectX::XMFLOAT4X4 m_depthCameraPose;
+    //m_pDepthCameraSensor->GetCameraExtrinsicsMatrix(&m_depthCameraPose);
+
+
     pSensorDevicePerception->Release();
     g_locator = SpatialGraphInteropPreview::CreateLocatorForNode(rigNodeId);
     //g_world = Locator_GetWorldCoordinateSystem();
@@ -212,7 +219,7 @@ std::tuple<UINT16 const*, UINT16 const*, float4x4 > SensorCapture::GetDepth()
     this->pSensorFrame->GetTimeStamp(&timestamp);
 
     //winrt::Windows::Perception::Spatial::SpatialCoordinateSystem world = Locator_GetWorldCoordinateSystem();
-    auto t = g_world.TryGetTransformTo(user_world).Value();
+    //auto t = g_world.TryGetTransformTo(user_world).Value();
 
     hololens_location = Locator_Locate(Timestamp_QPCToPerception(timestamp.HostTicks), g_locator, g_world);
 

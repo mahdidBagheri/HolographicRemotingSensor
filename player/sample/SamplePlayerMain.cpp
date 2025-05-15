@@ -218,7 +218,7 @@ HolographicFrame SamplePlayerMain::Update(float deltaTimeInSeconds, const Hologr
     if (m_playerContext.ConnectionState() == ConnectionState::Connected && !m_trackingLost && m_userSpatialFrameOfReference != nullptr)
     {
         SpatialCoordinateSystem userCoordinateSystem = m_userSpatialFrameOfReference.CoordinateSystem();
-        //m_sensorCapture->set_g_world(userCoordinateSystem);
+        m_sensorCapture->set_g_world(userCoordinateSystem);
         try
         {
             m_playerContext.UpdateUserSpatialFrameOfReference(userCoordinateSystem);
@@ -463,7 +463,8 @@ void SamplePlayerMain::Initialize(const CoreApplicationView& applicationView)
 #ifdef ENABLE_USER_COORDINATE_SYSTEM_SAMPLE
         // Create a stationaryFrameOfReference in front of the user.
         m_userSpatialFrameOfReference =
-            m_spatialLocator.CreateStationaryFrameOfReferenceAtCurrentLocation(float3(0.5f, 0.0f, -2.0f), quaternion(0, 0, 0, 1), 0.0);
+            //m_spatialLocator.CreateStationaryFrameOfReferenceAtCurrentLocation(float3(0.5f, 0.0f, -2.0f), quaternion(0, 0, 0, 1), 0.0);
+            m_spatialLocator.CreateStationaryFrameOfReferenceAtCurrentLocation(float3(0.0f, 0.0f, -0.0f), quaternion(0, 0, 0, 1), 0.0);
 #endif
     }
 }
@@ -1052,8 +1053,8 @@ void sendDepth(SensorCapture sc)
 
     std::tuple<UINT16 const*, UINT16 const*, float4x4> IRsensors = sc.GetDepth();
 
-    sc.senderIp = L"192.168.31.243";
-    //sc.senderIp = L"192.168.6.246";
+    //sc.senderIp = L"192.168.31.243";
+    //sc.senderIp = L"192.168.247.246";
 
     UINT16 const* sensor1Values = std::get<0>(IRsensors);
     UINT16 const* sensor2Values = std::get<1>(IRsensors);
